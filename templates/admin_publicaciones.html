@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{.Title}}</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg-main: #0f172a;
+      --bg-surface: #1e293b;
+      --bg-card: #182234;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border-color: rgba(255, 255, 255, 0.08);
+      --accent-blue: #38bdf8;
+      --accent-green: #22c55e;
+      --accent-yellow: #f59e0b;
+      --accent-red: #f43f5e;
+      --radius: 12px;
+      --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+      --transition: all 0.2s ease;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      background: rgba(30, 41, 59, 0.85);
+      border-bottom: 1px solid var(--border-color);
+      padding: 1rem 1.5rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .brand {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--text-main);
+      text-decoration: none;
+    }
+
+    .brand span { color: var(--accent-blue); }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+    }
+
+    .nav-link {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 0.35rem 0.7rem;
+      border-radius: 6px;
+      transition: var(--transition);
+    }
+
+    .nav-link:hover, .nav-link.active {
+      color: var(--text-main);
+      background: rgba(56, 189, 248, 0.12);
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .role-tag {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      padding: 0.2rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .btn-logout {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border-color);
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .btn-logout:hover {
+      background: rgba(244, 63, 94, 0.15);
+      color: #fda4af;
+      border-color: rgba(244, 63, 94, 0.3);
+    }
+
+    .main-container {
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 1.75rem;
+      box-shadow: var(--shadow);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .card-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
+
+    .card-subtitle {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .alert {
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+    }
+
+    .alert-error {
+      background: rgba(244, 63, 94, 0.15);
+      color: #fda4af;
+      border: 1px solid rgba(244, 63, 94, 0.3);
+    }
+
+    .alert-success {
+      background: rgba(34, 197, 94, 0.15);
+      color: #86efac;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .vehicles-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .vehicle-item {
+      display: flex;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      overflow: hidden;
+      transition: var(--transition);
+    }
+
+    .vehicle-item:hover {
+      border-color: rgba(56, 189, 248, 0.3);
+    }
+
+    .item-image {
+      width: 160px;
+      height: 115px;
+      object-fit: cover;
+      flex-shrink: 0;
+      background: #0b1120;
+    }
+
+    .item-body {
+      padding: 0.9rem 1.15rem;
+      flex: 1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .item-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .item-meta {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+    }
+
+    .item-price {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--accent-blue);
+      margin-top: 0.35rem;
+    }
+
+    .item-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+
+    .badge-pending {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .badge-published {
+      background: rgba(34, 197, 94, 0.15);
+      color: #86efac;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .badge-sold {
+      background: rgba(244, 63, 94, 0.15);
+      color: #fda4af;
+      border: 1px solid rgba(244, 63, 94, 0.3);
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .btn-approve {
+      background: #16a34a;
+      color: #ffffff;
+      border: none;
+      padding: 0.5rem 0.95rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .btn-approve:hover {
+      background: #15803d;
+    }
+
+    .btn-delete {
+      background: rgba(244, 63, 94, 0.15);
+      color: #fda4af;
+      border: 1px solid rgba(244, 63, 94, 0.35);
+      padding: 0.5rem 0.95rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .btn-delete:hover {
+      background: #e11d48;
+      color: #ffffff;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 2.25rem 1rem;
+      color: var(--text-muted);
+      font-size: 0.92rem;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div class="nav-container">
+      <div class="nav-links">
+        <a href="/" class="brand">Auto<span>Market</span></a>
+        <a href="/admin/publicaciones" class="nav-link active">Publicaciones</a>
+        <a href="/admin/usuarios" class="nav-link">Usuarios</a>
+        <a href="/" class="nav-link">Catálogo Público</a>
+      </div>
+      <div class="user-info">
+        <span style="font-size: 0.9rem; font-weight: 500;">Hola, {{.Username}}</span>
+        <span class="role-tag">Administrador</span>
+        <form action="/logout" method="POST" style="margin: 0;">
+          <button type="submit" class="btn-logout">Cerrar Sesión</button>
+        </form>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-container">
+    {{if .SuccessMsg}}
+      <div class="alert alert-success">{{.SuccessMsg}}</div>
+    {{end}}
+
+    {{if .ErrorMsg}}
+      <div class="alert alert-error">{{.ErrorMsg}}</div>
+    {{end}}
+
+    <!-- Sección 1: Publicaciones Pendientes para Aprobar -->
+    <section class="card">
+      <div class="card-header">
+        <div>
+          <h2 class="card-title">Publicaciones Pendientes de Aprobación</h2>
+          <p class="card-subtitle">Autoriza las solicitudes de los vendedores para hacerlas visibles en el catálogo público (Pendientes: {{.PendingCount}})</p>
+        </div>
+      </div>
+
+      {{if .PendingVehicles}}
+        <div class="vehicles-list">
+          {{range .PendingVehicles}}
+            <div class="vehicle-item">
+              <img src="{{.ImageURL}}" alt="{{.Title}}" class="item-image" loading="lazy">
+              <div class="item-body">
+                <div>
+                  <h3 class="item-title">{{.Title}}</h3>
+                  <div class="item-meta">ID: {{.ID}} &bull; Vendedor: {{.SellerID}} &bull; {{.YearMileage}} &bull; {{.Location}}</div>
+                  <div class="item-price">{{.PriceFormatted}}</div>
+                </div>
+                <div class="item-actions">
+                  <span class="badge-pending">● Pendiente</span>
+                  <form action="/admin/publicaciones/{{.ID}}/aprobar" method="POST" style="margin: 0;">
+                    <button type="submit" class="btn-approve">Aprobar</button>
+                  </form>
+                  <form action="/admin/publicaciones/{{.ID}}/eliminar" method="POST" style="margin: 0;">
+                    <button type="submit" class="btn-delete">Eliminar</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          {{end}}
+        </div>
+      {{else}}
+        <div class="empty-state">
+          <p>No hay publicaciones pendientes de aprobación en este momento.</p>
+        </div>
+      {{end}}
+    </section>
+
+    <!-- Sección 2: Todas las Publicaciones para Eliminar -->
+    <section class="card">
+      <div class="card-header">
+        <div>
+          <h2 class="card-title">Gestión General de Publicaciones</h2>
+          <p class="card-subtitle">Listado completo de publicaciones en la plataforma para moderación y eliminación (Total: {{.TotalCount}})</p>
+        </div>
+      </div>
+
+      {{if .AllVehicles}}
+        <div class="vehicles-list">
+          {{range .AllVehicles}}
+            <div class="vehicle-item">
+              <img src="{{.ImageURL}}" alt="{{.Title}}" class="item-image" loading="lazy">
+              <div class="item-body">
+                <div>
+                  <h3 class="item-title">{{.Title}}</h3>
+                  <div class="item-meta">ID: {{.ID}} &bull; Vendedor: {{.SellerID}} &bull; {{.YearMileage}} &bull; {{.Location}}</div>
+                  <div class="item-price">{{.PriceFormatted}}</div>
+                </div>
+                <div class="item-actions">
+                  {{if eq .Status "Pending"}}
+                    <span class="badge-pending">● Pendiente</span>
+                  {{else if eq .Status "Published"}}
+                    <span class="badge-published">● Publicada</span>
+                  {{else}}
+                    <span class="badge-sold">● Vendida</span>
+                  {{end}}
+                  <form action="/admin/publicaciones/{{.ID}}/eliminar" method="POST" style="margin: 0;">
+                    <button type="submit" class="btn-delete">Eliminar</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          {{end}}
+        </div>
+      {{else}}
+        <div class="empty-state">
+          <p>No existen publicaciones registradas en el sistema.</p>
+        </div>
+      {{end}}
+    </section>
+  </main>
+
+</body>
+</html>
