@@ -2,6 +2,10 @@ package repository
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"errors"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -289,6 +293,37 @@ func (r *MemoryRepository) ListAllUsers(ctx context.Context) ([]*domain.User, er
 	return result, nil
 }
 
+func (r *MemoryRepository) DeleteUser(ctx context.Context, id string) error {
+	r.userMu.Lock()
+	u, exists := r.users[id]
+	if !exists {
+		r.userMu.Unlock()
+		return domain.ErrUserNotFound
+	}
+	norm := strings.ToLower(strings.TrimSpace(u.Username))
+	delete(r.byUsername, norm)
+	delete(r.users, id)
+	r.userMu.Unlock()
+
+	// se eliminan las publicaciones asociadas al usuario eliminado
+	r.vehicleMu.Lock()
+	for vehID, v := range r.vehicles {
+		if v.SellerID == id {
+			delete(r.vehicles, vehID)
+		}
+	}
+	r.vehicleMu.Unlock()
+	// invalidar sesiones activas del usuario eliminado
+	r.sessionMu.Lock()
+	for token, s := range r.sessions {
+		if s.UserID == id {
+			delete(r.sessions, token)
+		}
+	}
+	r.sessionMu.Unlock()
+	return nil
+}
+
 // =========================================================================
 // MÉTODOS DE SESIONES (domain.SessionRepository)
 // =========================================================================
@@ -348,6 +383,22 @@ func (r *MemoryRepository) DeleteExpiredSessions(ctx context.Context) error {
 // MÉTODOS DE AUDITORÍA - ACCOUNTING (domain.AuditRepository)
 // =========================================================================
 
+func computeAuditHash(e *domain.AuditLog) string {
+	payload := fmt.Sprintf("%d|%s|%s|%s|%s|%s|%s|%d|%s",
+		e.Seq,
+		e.Timestamp.UTC().Format(time.RFC3339Nano),
+		e.ActorID,
+		e.Role,
+		e.Action,
+		e.Resource,
+		e.Result,
+		e.Status,
+		e.PrevHash,
+	)
+	sum := sha256.Sum256([]byte(payload))
+	return hex.EncodeToString(sum[:])
+}
+
 func (r *MemoryRepository) Record(ctx context.Context, entry *domain.AuditLog) error {
 	if entry == nil {
 		return domain.ErrInvalidInput
@@ -355,11 +406,43 @@ func (r *MemoryRepository) Record(ctx context.Context, entry *domain.AuditLog) e
 	r.auditMu.Lock()
 	defer r.auditMu.Unlock()
 
+	// si se alcanzó el límite máximo de capacidad, se retorna error de escritura
 	if len(r.logs) >= r.maxLogs {
-		r.logs = r.logs[1:]
+		return errors.New("capacidad máxima de auditoría alcanzada: fallo de escritura")
 	}
+
+	entry.Seq = len(r.logs) + 1
+
+	if len(r.logs) == 0 {
+		entry.PrevHash = strings.Repeat("0", 64)
+	} else {
+		entry.PrevHash = r.logs[len(r.logs)-1].Hash
+	}
+
+	entry.Hash = computeAuditHash(entry)
+
 	r.logs = append(r.logs, entry.Clone())
 	return nil
+}
+
+func (r *MemoryRepository) VerifyIntegrity(ctx context.Context) (bool, int, error) {
+	r.auditMu.RLock()
+	defer r.auditMu.RUnlock()
+	expectedPrevHash := strings.Repeat("0", 64)
+	for i, entry := range r.logs {
+		expectedSeq := i + 1
+		if entry.Seq != expectedSeq {
+			return false, expectedSeq, errors.New("secuencia de auditoría rota o registro eliminado")
+		}
+		if entry.PrevHash != expectedPrevHash {
+			return false, expectedSeq, errors.New("cadena de hashes rota (PrevHash no coincide)")
+		}
+		if computeAuditHash(entry) != entry.Hash {
+			return false, expectedSeq, errors.New("contenido del registro alterado (Hash inválido)")
+		}
+		expectedPrevHash = entry.Hash
+	}
+	return true, 0, nil
 }
 
 func (r *MemoryRepository) ListRecent(ctx context.Context, limit int) ([]*domain.AuditLog, error) {
@@ -380,3 +463,4 @@ func (r *MemoryRepository) ListRecent(ctx context.Context, limit int) ([]*domain
 	}
 	return result, nil
 }
+

@@ -78,3 +78,9 @@ func Accounting(auditRepo domain.AuditRepository) gin.HandlerFunc {
 		}
 	}
 }
+
+func SetAuditMetadata(c *gin.Context, action, resource, result string) {
+    c.Set("audit_action", action)
+    c.Set("audit_resource", resource)
+    c.Set("audit_result", result)
+}
