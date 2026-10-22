@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"net/http"
-	"strings"
 
 	"automarket/internal/domain"
 
@@ -10,12 +9,12 @@ import (
 )
 
 const (
-	SessionCookieName = "automarket_session"
+	SessionCookieName = "session_token"
 	SessionDuration   = 24 * 60 * 60 // 24 horas en segundos
 )
 
-// Authenticate verifica la presencia de la cookie de sesión y asocia los datos del usuario al contexto.
-// No bloquea la petición si no hay sesión, permitiendo que rutas públicas conozcan el estado del usuario.
+// Authenticate verifica la presencia de la cookie de sesión y busca la sesión en el repositorio en memoria.
+// Inyecta el ID del usuario en el gin.Context ("user_id", "username", "role").
 func Authenticate(sessionRepo domain.SessionRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token, err := c.Cookie(SessionCookieName)
@@ -25,16 +24,15 @@ func Authenticate(sessionRepo domain.SessionRepository) gin.HandlerFunc {
 			return
 		}
 
-		session, err := sessionRepo.GetByToken(c.Request.Context(), token)
+		session, err := sessionRepo.GetSessionByToken(c.Request.Context(), token)
 		if err != nil || session == nil || session.IsExpired() {
-			// Cookie inválida o expirada: eliminar del navegador
 			ClearSessionCookie(c)
 			c.Set("is_authenticated", false)
 			c.Next()
 			return
 		}
 
-		// Inyección de la identidad en el contexto de Gin
+		// Inyección del ID del usuario y datos de sesión en gin.Context
 		c.Set("is_authenticated", true)
 		c.Set("user_id", session.UserID)
 		c.Set("username", session.Username)
@@ -46,32 +44,52 @@ func Authenticate(sessionRepo domain.SessionRepository) gin.HandlerFunc {
 }
 
 // RequireAuth restringe el acceso exclusivamente a usuarios autenticados.
-// Si el cliente no está autenticado, responde con 401 (API) o redirige a /login (SSR).
 func RequireAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		isAuth, exists := c.Get("is_authenticated")
 		if !exists || !isAuth.(bool) {
-			if isBrowserRequest(c) {
-				c.Redirect(http.StatusSeeOther, "/login?error=requiere_autenticacion")
-				c.Abort()
-				return
-			}
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"error": "Debe autenticarse para acceder a este recurso",
-			})
+			c.Redirect(http.StatusSeeOther, "/login?error=Debe+iniciar+sesión+para+continuar")
+			c.Abort()
 			return
 		}
 		c.Next()
 	}
 }
 
-// SetSessionCookie configura una cookie de sesión con directivas de máxima seguridad.
-// HttpOnly previene acceso desde scripts del navegador (mitigando ataques XSS).
-// SameSite=Lax protege contra ataques de falsificación de petición en sitios cruzados (CSRF).
-func SetSessionCookie(c *gin.Context, token string, secure bool) {
-	// Si la conexión entrante es TLS o el flag secure está activo, marcar cookie como Secure
-	isSecure := secure || c.Request.TLS != nil || c.GetHeader("X-Forwarded-Proto") == "https"
+// RequireRoles verifica que el rol inyectado en gin.Context coincida con los roles autorizados (Authz).
+func RequireRoles(allowedRoles ...domain.Role) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		isAuth, exists := c.Get("is_authenticated")
+		if !exists || !isAuth.(bool) {
+			c.Redirect(http.StatusSeeOther, "/login?error=Debe+iniciar+sesión")
+			c.Abort()
+			return
+		}
 
+		userRoleStr := c.GetString("role")
+		userRole := domain.Role(userRoleStr)
+
+		isAllowed := false
+		for _, role := range allowedRoles {
+			if userRole == role {
+				isAllowed = true
+				break
+			}
+		}
+
+		if !isAllowed {
+			c.String(http.StatusForbidden, "403 Acceso Denegado: Se requiere rol autorizado (%s)", formatRoles(allowedRoles))
+			c.Abort()
+			return
+		}
+
+		c.Next()
+	}
+}
+
+// SetSessionCookie configura una cookie segura con HttpOnly y SameSite.
+func SetSessionCookie(c *gin.Context, token string) {
+	isSecure := c.Request.TLS != nil || c.GetHeader("X-Forwarded-Proto") == "https"
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     SessionCookieName,
 		Value:    token,
@@ -83,7 +101,7 @@ func SetSessionCookie(c *gin.Context, token string, secure bool) {
 	})
 }
 
-// ClearSessionCookie invalida la cookie de sesión en el navegador.
+// ClearSessionCookie elimina la cookie en el navegador.
 func ClearSessionCookie(c *gin.Context) {
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     SessionCookieName,
@@ -95,8 +113,13 @@ func ClearSessionCookie(c *gin.Context) {
 	})
 }
 
-// isBrowserRequest determina si la petición proviene de un navegador web para vistas SSR.
-func isBrowserRequest(c *gin.Context) bool {
-	accept := c.GetHeader("Accept")
-	return strings.Contains(accept, "text/html")
+func formatRoles(roles []domain.Role) string {
+	res := ""
+	for i, r := range roles {
+		if i > 0 {
+			res += ", "
+		}
+		res += string(r)
+	}
+	return res
 }

@@ -51,11 +51,10 @@ func GetInstance() *MemoryRepository {
 // seedData inicializa los datos de prueba (Mock Data) con vehículos en estado Published
 // apuntando a "/assets/images/car1.jpg" según la HU-VIS-01.
 func (r *MemoryRepository) seedData() {
-	// Usuarios iniciales
 	adminUser := &domain.User{
 		ID:           "usr-admin",
 		Username:     "admin",
-		PasswordHash: security.HashPassword("Admin123!", "salt_admin_demo"),
+		PasswordHash: security.HashPassword("Admin123!"),
 		Role:         domain.RoleAdmin,
 		CreatedAt:    time.Now(),
 	}
@@ -65,14 +64,13 @@ func (r *MemoryRepository) seedData() {
 	sellerUser := &domain.User{
 		ID:           "usr-seller-1",
 		Username:     "carlos_autos",
-		PasswordHash: security.HashPassword("Seller123!", "salt_seller_demo"),
+		PasswordHash: security.HashPassword("Seller123!"),
 		Role:         domain.RoleSeller,
 		CreatedAt:    time.Now(),
 	}
 	r.users[sellerUser.ID] = sellerUser
 	r.byUsername["carlos_autos"] = sellerUser.ID
 
-	// Vehículos Semilla (Mock Data) según la especificación exacta
 	seedVehicles := []*domain.Vehicle{
 		{
 			ID:             "veh-001",
@@ -126,7 +124,7 @@ func (r *MemoryRepository) seedData() {
 			YearMileage:    "2023 • 19,000 km",
 			Location:       "Bogotá, Colombia",
 			WhatsAppNumber: "573017779900",
-			Status:         domain.StatusPending, // Estado pendiente: no debe verse en catálogo público
+			Status:         domain.StatusPending,
 			SellerID:       sellerUser.ID,
 		},
 		{
@@ -137,7 +135,7 @@ func (r *MemoryRepository) seedData() {
 			YearMileage:    "2023 • 25,000 km",
 			Location:       "Bucaramanga, Colombia",
 			WhatsAppNumber: "573183332211",
-			Status:         domain.StatusSold, // Estado vendido: no debe verse en catálogo público
+			Status:         domain.StatusSold,
 			SellerID:       sellerUser.ID,
 		},
 	}
@@ -158,6 +156,19 @@ func (r *MemoryRepository) GetPublished(ctx context.Context) ([]*domain.Vehicle,
 	var result []*domain.Vehicle
 	for _, v := range r.vehicles {
 		if v.Status == domain.StatusPublished {
+			result = append(result, v.Clone())
+		}
+	}
+	return result, nil
+}
+
+func (r *MemoryRepository) GetBySellerID(ctx context.Context, sellerID string) ([]*domain.Vehicle, error) {
+	r.vehicleMu.RLock()
+	defer r.vehicleMu.RUnlock()
+
+	var result []*domain.Vehicle
+	for _, v := range r.vehicles {
+		if v.SellerID == sellerID {
 			result = append(result, v.Clone())
 		}
 	}
@@ -276,6 +287,61 @@ func (r *MemoryRepository) ListAllUsers(ctx context.Context) ([]*domain.User, er
 		result = append(result, u.Clone())
 	}
 	return result, nil
+}
+
+// =========================================================================
+// MÉTODOS DE SESIONES (domain.SessionRepository)
+// =========================================================================
+
+func (r *MemoryRepository) CreateSession(ctx context.Context, session *domain.Session) error {
+	if session == nil || session.Token == "" {
+		return domain.ErrInvalidInput
+	}
+	r.sessionMu.Lock()
+	defer r.sessionMu.Unlock()
+
+	r.sessions[session.Token] = session.Clone()
+	return nil
+}
+
+func (r *MemoryRepository) GetSessionByToken(ctx context.Context, token string) (*domain.Session, error) {
+	r.sessionMu.RLock()
+	session, exists := r.sessions[token]
+	r.sessionMu.RUnlock()
+
+	if !exists {
+		return nil, domain.ErrSessionNotFound
+	}
+
+	if session.IsExpired() {
+		r.sessionMu.Lock()
+		delete(r.sessions, token)
+		r.sessionMu.Unlock()
+		return nil, domain.ErrSessionExpired
+	}
+
+	return session.Clone(), nil
+}
+
+func (r *MemoryRepository) DeleteSession(ctx context.Context, token string) error {
+	r.sessionMu.Lock()
+	defer r.sessionMu.Unlock()
+
+	delete(r.sessions, token)
+	return nil
+}
+
+func (r *MemoryRepository) DeleteExpiredSessions(ctx context.Context) error {
+	r.sessionMu.Lock()
+	defer r.sessionMu.Unlock()
+
+	now := time.Now()
+	for token, s := range r.sessions {
+		if now.After(s.ExpiresAt) {
+			delete(r.sessions, token)
+		}
+	}
+	return nil
 }
 
 // =========================================================================

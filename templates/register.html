@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{.Title}}</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg-main: #0f172a;
+      --bg-surface: #1e293b;
+      --bg-card: #182234;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border-color: rgba(255, 255, 255, 0.08);
+      --accent-blue: #38bdf8;
+      --accent-green: #22c55e;
+      --accent-red: #f43f5e;
+      --radius: 12px;
+      --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+      --transition: all 0.2s ease;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      background: rgba(30, 41, 59, 0.85);
+      border-bottom: 1px solid var(--border-color);
+      padding: 1rem 1.5rem;
+    }
+
+    .nav-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--text-main);
+      text-decoration: none;
+    }
+
+    .brand span { color: var(--accent-blue); }
+
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.95rem;
+      transition: var(--transition);
+    }
+
+    .nav-links a:hover { color: var(--text-main); }
+
+    .main-container {
+      flex: 1;
+      max-width: 460px;
+      width: 100%;
+      margin: 3rem auto;
+      padding: 0 1.5rem;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 2rem;
+      box-shadow: var(--shadow);
+    }
+
+    .card-title {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      text-align: center;
+    }
+
+    .card-subtitle {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      text-align: center;
+      margin-bottom: 1.75rem;
+    }
+
+    .alert {
+      padding: 0.85rem 1rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .alert-error {
+      background: rgba(244, 63, 94, 0.15);
+      color: #fda4af;
+      border: 1px solid rgba(244, 63, 94, 0.3);
+    }
+
+    .form-group {
+      margin-bottom: 1.2rem;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 0.4rem;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: #0f172a;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-main);
+      font-size: 0.95rem;
+      transition: var(--transition);
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+    }
+
+    .role-badge {
+      display: inline-block;
+      padding: 0.3rem 0.7rem;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent-blue);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-top: 0.25rem;
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 0.8rem;
+      background: #0284c7;
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      margin-top: 0.5rem;
+    }
+
+    .btn-submit:hover {
+      background: #0369a1;
+    }
+
+    .card-footer {
+      margin-top: 1.5rem;
+      text-align: center;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+
+    .card-footer a {
+      color: var(--accent-blue);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .card-footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div class="nav-container">
+      <a href="/" class="brand">Auto<span>Market</span></a>
+      <div class="nav-links">
+        <a href="/">← Volver al Catálogo</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-container">
+    <div class="card">
+      <h1 class="card-title">Crear Cuenta</h1>
+      <p class="card-subtitle">Regístrate para publicar tus vehículos</p>
+
+      {{if .ErrorMessage}}
+        <div class="alert alert-error">{{.ErrorMessage}}</div>
+      {{end}}
+
+      <form action="/register" method="POST">
+        <div class="form-group">
+          <label class="form-label" for="username">Nombre de Usuario</label>
+          <input 
+            type="text" 
+            id="username" 
+            name="username" 
+            value="{{.Username}}" 
+            class="form-control" 
+            placeholder="Ej. carlos_autos" 
+            required 
+            minlength="3" 
+            autofocus
+          >
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Rol Asignado</label>
+          <div>
+            <span class="role-badge">Vendedor (Seller)</span>
+          </div>
+          <small style="color: var(--text-muted); font-size: 0.75rem; margin-top: 0.25rem; display: block;">
+            Los nuevos registros obtienen rol de Vendedor automáticamente.
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Contraseña (Mínimo 6 caracteres)</label>
+          <input 
+            type="password" 
+            id="password" 
+            name="password" 
+            class="form-control" 
+            placeholder="••••••••" 
+            required 
+            minlength="6"
+          >
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="confirm_password">Confirmar Contraseña</label>
+          <input 
+            type="password" 
+            id="confirm_password" 
+            name="confirm_password" 
+            class="form-control" 
+            placeholder="••••••••" 
+            required 
+            minlength="6"
+          >
+        </div>
+
+        <button type="submit" class="btn-submit">Registrarme como Vendedor</button>
+      </form>
+
+      <div class="card-footer">
+        ¿Ya tienes cuenta? <a href="/login">Inicia Sesión</a>
+      </div>
+    </div>
+  </main>
+
+</body>
+</html>
