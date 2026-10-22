@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{.Title}}</title>
+  <style>
+    /* ==========================================================================
+       AutoMarket - CSS Nativo y Modular (Bajo Acoplamiento, sin frameworks)
+       ========================================================================== */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg-main: #0f172a;
+      --bg-surface: #1e293b;
+      --bg-card: #182234;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border-color: rgba(255, 255, 255, 0.08);
+      --accent-blue: #38bdf8;
+      --accent-green: #22c55e;
+      --whatsapp-color: #25d366;
+      --whatsapp-hover: #1eb956;
+      --radius: 12px;
+      --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
+      --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header & Navbar */
+    .header {
+      background: rgba(30, 41, 59, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--text-main);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .brand span {
+      color: var(--accent-blue);
+    }
+
+    .badge-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.25rem 0.65rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--accent-green);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    /* Main Container */
+    .main-container {
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem;
+      flex: 1;
+    }
+
+    .hero-section {
+      margin-bottom: 2.5rem;
+    }
+
+    .hero-title {
+      font-size: 2.25rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.025em;
+    }
+
+    .hero-subtitle {
+      color: var(--text-muted);
+      font-size: 1rem;
+    }
+
+    /* Marketplace CSS Grid */
+    .marketplace-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 2rem;
+    }
+
+    /* Vehicle Card */
+    .vehicle-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow);
+      transition: var(--transition);
+    }
+
+    .vehicle-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(56, 189, 248, 0.4);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Imagen superior */
+    .vehicle-image-container {
+      position: relative;
+      width: 100%;
+      height: 210px;
+      background: #0b1120;
+      overflow: hidden;
+    }
+
+    .vehicle-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.4s ease;
+    }
+
+    .vehicle-card:hover .vehicle-image {
+      transform: scale(1.04);
+    }
+
+    .tag-published {
+      position: absolute;
+      top: 0.85rem;
+      right: 0.85rem;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(6px);
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--accent-green);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    /* Cuerpo y Textos organizados */
+    .vehicle-content {
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    .vehicle-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 0.4rem;
+      line-height: 1.35;
+    }
+
+    .vehicle-price {
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: var(--accent-blue);
+      margin-bottom: 0.85rem;
+    }
+
+    .vehicle-specs {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      margin-bottom: 1.25rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border-color);
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .spec-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .spec-icon {
+      width: 16px;
+      height: 16px;
+      stroke: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    /* Botón WhatsApp */
+    .whatsapp-btn {
+      margin-top: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      background-color: var(--whatsapp-color);
+      color: #ffffff;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      transition: var(--transition);
+      border: none;
+      cursor: pointer;
+    }
+
+    .whatsapp-btn:hover {
+      background-color: var(--whatsapp-hover);
+      box-shadow: 0 4px 12px rgba(37, 211, 102, 0.35);
+    }
+
+    .whatsapp-icon {
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
+    }
+
+    /* Footer */
+    .footer {
+      border-top: 1px solid var(--border-color);
+      padding: 1.75rem 1.5rem;
+      text-align: center;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      background: var(--bg-surface);
+      margin-top: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navegación -->
+  <header class="header">
+    <div class="nav-container">
+      <a href="/" class="brand">
+        Auto<span>Market</span>
+      </a>
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <span class="badge-status">
+          ● HU-VIS-01 Catálogo Activo
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Contenedor Principal -->
+  <main class="main-container">
+    <section class="hero-section">
+      <h1 class="hero-title">Catálogo Oficial de Vehículos</h1>
+      <p class="hero-subtitle">
+        Mostrando {{.Total}} vehículos certificados disponibles para contacto directo e inmediato.
+      </p>
+    </section>
+
+    <!-- Grid de Vehículos Marketplace -->
+    <div class="marketplace-grid">
+      {{range .Vehicles}}
+        <article class="vehicle-card">
+          <!-- 1. Imagen Arriba -->
+          <div class="vehicle-image-container">
+            <img src="{{.ImageURL}}" alt="{{.Title}}" class="vehicle-image" loading="lazy">
+            <span class="tag-published">Publicado</span>
+          </div>
+
+          <!-- 2. Textos Organizados -->
+          <div class="vehicle-content">
+            <h2 class="vehicle-title">{{.Title}}</h2>
+            <div class="vehicle-price">{{.PriceFormatted}}</div>
+
+            <div class="vehicle-specs">
+              <!-- Año y Kilometraje -->
+              <div class="spec-item">
+                <svg class="spec-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <span>{{.YearMileage}}</span>
+              </div>
+              <!-- Ubicación -->
+              <div class="spec-item">
+                <svg class="spec-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                  <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+                <span>{{.Location}}</span>
+              </div>
+            </div>
+
+            <!-- 3. Botón Enlace wa.me al final -->
+            <a 
+              href="https://wa.me/{{.WhatsAppNumber}}?text=Hola,%20estoy%20interesado%20en%20el%20vehículo%20{{.Title}}%20publicado%20en%20AutoMarket" 
+              class="whatsapp-btn" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              aria-label="Contactar al vendedor por WhatsApp para {{.Title}}"
+            >
+              <!-- Icono oficial WhatsApp SVG -->
+              <svg class="whatsapp-icon" viewBox="0 0 24 24">
+                <path d="M12.031 2C6.495 2 2 6.495 2 12.031c0 1.767.461 3.487 1.336 5.008L2 22l5.093-1.333a9.986 9.986 0 0 0 4.938 1.298h.004c5.535 0 10.03-4.495 10.03-10.034A9.97 9.97 0 0 0 12.031 2zm5.86 14.184c-.244.686-1.42 1.309-1.956 1.393-.536.084-1.229.119-1.99-.125-.461-.148-1.054-.344-1.815-.672-3.197-1.378-5.275-4.606-5.435-4.819-.16-.214-1.299-1.728-1.299-3.296 0-1.569.824-2.341 1.116-2.662.292-.321.637-.402.85-.402.213 0 .426.002.613.011.198.01.463-.075.725.553.27.65.918 2.241.998 2.405.08.164.133.356.026.57-.107.214-.16.347-.32.533-.16.187-.336.417-.48.56-.16.16-.327.334-.14.655.186.321.829 1.369 1.777 2.214 1.218 1.085 2.245 1.422 2.565 1.583.32.16.507.134.694-.08.187-.214.799-.933 1.012-1.254.214-.32.427-.268.72-.16.293.107 1.864.878 2.184 1.039.32.16.533.24.613.374.08.134.08.775-.164 1.461z"/>
+              </svg>
+              <span>Contactar por WhatsApp</span>
+            </a>
+          </div>
+        </article>
+      {{else}}
+        <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 1rem; color: var(--text-muted);">
+          <p>No hay vehículos publicados disponibles en este momento.</p>
+        </div>
+      {{end}}
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p><strong>AutoMarket</strong> &copy; 2026 &bull; Taller AAA (Ciberseguridad) &bull; Grupo Creepers</p>
+  </footer>
+
+</body>
+</html>

@@ -1,46 +1,32 @@
 package domain
 
-import "time"
-
-// VehicleStatus representa el estado comercial de un vehículo.
+// VehicleStatus representa el estado del vehículo en AutoMarket.
 type VehicleStatus string
 
 const (
-	StatusAvailable VehicleStatus = "AVAILABLE"
-	StatusReserved  VehicleStatus = "RESERVED"
-	StatusSold      VehicleStatus = "SOLD"
+	StatusPending   VehicleStatus = "Pending"
+	StatusPublished VehicleStatus = "Published"
+	StatusSold      VehicleStatus = "Sold"
 )
 
-// Vehicle representa la entidad pura de un vehículo en AutoMarket.
+// Vehicle representa la entidad exacta según HU-VIS-01.
 type Vehicle struct {
-	ID          string        `json:"id"`
-	Brand       string        `json:"brand"`
-	Model       string        `json:"model"`
-	Year        int           `json:"year"`
-	Price       float64       `json:"price"`
-	Mileage     int           `json:"mileage"`
-	Status      VehicleStatus `json:"status"`
-	Description string        `json:"description"`
-	SellerID    string        `json:"seller_id"`
-	SellerName  string        `json:"seller_name"`
-	ImageURL    string        `json:"image_url"`
-	CreatedAt   time.Time     `json:"created_at"`
-	UpdatedAt   time.Time     `json:"updated_at"`
+	ID              string        `json:"id"`
+	ImageURL        string        `json:"image_url"`
+	Title           string        `json:"title"`
+	PriceFormatted  string        `json:"price_formatted"`
+	YearMileage     string        `json:"year_mileage"`
+	Location        string        `json:"location"`
+	WhatsAppNumber  string        `json:"whatsapp_number"`
+	Status          VehicleStatus `json:"status"`
+	SellerID        string        `json:"seller_id"`
 }
 
-// Clone produce una copia segura para concurrencia en memoria.
+// Clone produce una copia profunda para seguridad concurrente.
 func (v *Vehicle) Clone() *Vehicle {
 	if v == nil {
 		return nil
 	}
 	copyVehicle := *v
 	return &copyVehicle
-}
-
-// VehicleFilter define los criterios de búsqueda en el repositorio.
-type VehicleFilter struct {
-	Brand    string
-	Status   VehicleStatus
-	MaxPrice float64
-	SellerID string
 }
