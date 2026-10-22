@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+	"automarket/internal/domain"
 	"automarket/internal/handlers"
 	"automarket/internal/middleware"
 	"automarket/internal/repository"
@@ -12,9 +13,9 @@ import (
 )
 
 func main() {
-	log.Println("[INIT] Inicializando AutoMarket - HU-VIS-01...")
+	log.Println("[INIT] Inicializando AutoMarket - HU-VIS-01 & HU-VEN-01...")
 
-	// 1. Obtener repositorio en memoria (Singleton, thread-safe con sync.RWMutex)
+	// 1. Repositorio en memoria (Singleton, thread-safe con sync.RWMutex)
 	repo := repository.GetInstance()
 
 	// 2. Configurar motor Gin
@@ -22,29 +23,47 @@ func main() {
 	router := gin.New()
 	router.Use(gin.Recovery())
 
-	// 3. Configuración solicitada de archivos estáticos y plantillas:
-	// - router.Static("/assets", "./assets")
-	// - router.LoadHTMLGlob("templates/*")
+	// 3. Estáticos y Plantillas
 	router.Static("/assets", "./assets")
 	router.LoadHTMLGlob("templates/*")
 
-	// 4. Middleware de Accounting (AAA)
-	// Intercepta y registra: Método, URL, UserID y Timestamp
+	// 4. Middlewares Globales
+	// Accounting: Intercepta y registra todas las peticiones (Método, URL, UserID, Timestamp)
 	router.Use(middleware.Accounting(repo))
+	// Authentication: Valida cookie "session_token" e inyecta user_id y rol en gin.Context
+	router.Use(middleware.Authenticate(repo))
 
-	// 5. Inyección del handler del catálogo público
+	// 5. Inyección de Handlers
 	catalogHandler := handlers.NewCatalogHandler(repo)
+	authHandler := handlers.NewAuthHandler(repo, repo)
+	vehicleHandler := handlers.NewVehicleHandler(repo)
 
-	// 6. Handler GET '/' que consulta el repositorio (solo "Published") y lo pasa a la plantilla
+	// 6. Rutas Públicas (HU-VIS-01 y Autenticación)
 	router.GET("/", catalogHandler.Index)
 
-	// 7. Iniciar el servidor
+	router.GET("/register", authHandler.ShowRegister)
+	router.POST("/register", authHandler.Register)
+
+	router.GET("/login", authHandler.ShowLogin)
+	router.POST("/login", authHandler.Login)
+	router.POST("/logout", authHandler.Logout)
+
+	// 7. Rutas Protegidas por Autenticación y Autorización (HU-VEN-01 - Solo 'Seller')
+	sellerGroup := router.Group("/")
+	sellerGroup.Use(middleware.RequireAuth())
+	sellerGroup.Use(middleware.RequireRoles(domain.RoleSeller))
+	{
+		sellerGroup.GET("/dashboard", vehicleHandler.Dashboard)
+		sellerGroup.POST("/vehicles", vehicleHandler.Create)
+	}
+
+	// 8. Iniciar el servidor
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
 
-	log.Printf("[SERVER] AutoMarket corriendo en http://localhost:%s\n", port)
+	log.Printf("[SERVER] AutoMarket ejecutándose en http://localhost:%s\n", port)
 	if err := router.Run(":" + port); err != nil {
 		log.Fatalf("[FATAL] Error ejecutando el servidor: %v", err)
 	}

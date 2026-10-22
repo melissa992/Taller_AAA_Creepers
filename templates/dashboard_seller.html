@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{.Title}}</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg-main: #0f172a;
+      --bg-surface: #1e293b;
+      --bg-card: #182234;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border-color: rgba(255, 255, 255, 0.08);
+      --accent-blue: #38bdf8;
+      --accent-green: #22c55e;
+      --accent-yellow: #f59e0b;
+      --accent-red: #f43f5e;
+      --radius: 12px;
+      --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+      --transition: all 0.2s ease;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      background: rgba(30, 41, 59, 0.85);
+      border-bottom: 1px solid var(--border-color);
+      padding: 1rem 1.5rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--text-main);
+      text-decoration: none;
+    }
+
+    .brand span { color: var(--accent-blue); }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .role-tag {
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent-blue);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 0.2rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .btn-logout {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border-color);
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .btn-logout:hover {
+      background: rgba(244, 63, 94, 0.15);
+      color: #fda4af;
+      border-color: rgba(244, 63, 94, 0.3);
+    }
+
+    .main-container {
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem;
+      flex: 1;
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 2rem;
+      align-items: start;
+    }
+
+    @media (max-width: 900px) {
+      .main-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 1.75rem;
+      box-shadow: var(--shadow);
+    }
+
+    .card-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .card-subtitle {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .alert {
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .alert-error {
+      background: rgba(244, 63, 94, 0.15);
+      color: #fda4af;
+      border: 1px solid rgba(244, 63, 94, 0.3);
+    }
+
+    .alert-success {
+      background: rgba(34, 197, 94, 0.15);
+      color: #86efac;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.825rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 0.35rem;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 0.65rem 0.85rem;
+      background: #0f172a;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--text-main);
+      font-size: 0.9rem;
+      transition: var(--transition);
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+    }
+
+    .btn-create {
+      width: 100%;
+      padding: 0.75rem;
+      background: #0284c7;
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      margin-top: 0.5rem;
+    }
+
+    .btn-create:hover {
+      background: #0369a1;
+    }
+
+    /* Lista de Vehículos del Vendedor */
+    .vehicles-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .vehicle-item {
+      display: flex;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      overflow: hidden;
+      transition: var(--transition);
+    }
+
+    .vehicle-item:hover {
+      border-color: rgba(56, 189, 248, 0.3);
+    }
+
+    .item-image {
+      width: 150px;
+      height: 110px;
+      object-fit: cover;
+      flex-shrink: 0;
+      background: #0b1120;
+    }
+
+    .item-body {
+      padding: 0.85rem 1rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .item-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .item-meta {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+    }
+
+    .item-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 0.5rem;
+    }
+
+    .item-price {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--accent-blue);
+    }
+
+    .badge-pending {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      padding: 0.2rem 0.55rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .badge-published {
+      background: rgba(34, 197, 94, 0.15);
+      color: #86efac;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      padding: 0.2rem 0.55rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .badge-sold {
+      background: rgba(244, 63, 94, 0.15);
+      color: #fda4af;
+      border: 1px solid rgba(244, 63, 94, 0.3);
+      padding: 0.2rem 0.55rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div class="nav-container">
+      <div style="display: flex; align-items: center; gap: 1.5rem;">
+        <a href="/" class="brand">Auto<span>Market</span></a>
+        <a href="/" style="color: var(--text-muted); text-decoration: none; font-size: 0.85rem;">Catálogo Público</a>
+      </div>
+      <div class="user-info">
+        <span style="font-size: 0.9rem; font-weight: 500;">Hola, {{.Username}}</span>
+        <span class="role-tag">Vendedor</span>
+        <form action="/logout" method="POST" style="margin: 0;">
+          <button type="submit" class="btn-logout">Cerrar Sesión</button>
+        </form>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-container">
+    <!-- Columna 1: Formulario Crear Vehículo -->
+    <div class="card">
+      <h2 class="card-title">Publicar Vehículo</h2>
+      <p class="card-subtitle">El vehículo quedará con estado <strong>Pending</strong> para revisión.</p>
+
+      {{if .ErrorMessage}}
+        <div class="alert alert-error">{{.ErrorMessage}}</div>
+      {{end}}
+
+      {{if .ErrorMsg}}
+        <div class="alert alert-error">{{.ErrorMsg}}</div>
+      {{end}}
+
+      <form action="/vehicles" method="POST">
+        <div class="form-group">
+          <label class="form-label" for="title">Título del Vehículo *</label>
+          <input 
+            type="text" 
+            id="title" 
+            name="title" 
+            value="{{.TitleVal}}" 
+            class="form-control" 
+            placeholder="Ej. Mazda 3 Grand Touring 2023" 
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="price_formatted">Precio Formateado *</label>
+          <input 
+            type="text" 
+            id="price_formatted" 
+            name="price_formatted" 
+            value="{{.PriceVal}}" 
+            class="form-control" 
+            placeholder="Ej. $24,500 USD" 
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="year_mileage">Año y Kilometraje *</label>
+          <input 
+            type="text" 
+            id="year_mileage" 
+            name="year_mileage" 
+            value="{{.YearMileageVal}}" 
+            class="form-control" 
+            placeholder="Ej. 2023 • 18,000 km" 
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="location">Ubicación (Ciudad, País) *</label>
+          <input 
+            type="text" 
+            id="location" 
+            name="location" 
+            value="{{.LocationVal}}" 
+            class="form-control" 
+            placeholder="Ej. Bogotá, Colombia" 
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="whatsapp_number">Número WhatsApp (con código de país) *</label>
+          <input 
+            type="text" 
+            id="whatsapp_number" 
+            name="whatsapp_number" 
+            value="{{.WhatsAppVal}}" 
+            class="form-control" 
+            placeholder="Ej. 573001234567" 
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="image_url">Ruta de Imagen (Opcional)</label>
+          <input 
+            type="text" 
+            id="image_url" 
+            name="image_url" 
+            value="{{.ImageVal}}" 
+            class="form-control" 
+            placeholder="/assets/images/car1.jpg (predeterminada)"
+          >
+        </div>
+
+        <button type="submit" class="btn-create">Publicar Vehículo (Pending)</button>
+      </form>
+    </div>
+
+    <!-- Columna 2: Mis Vehículos -->
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+        <div>
+          <h2 class="card-title">Mis Publicaciones</h2>
+          <p class="card-subtitle" style="margin-bottom: 0;">Gestiona tus vehículos publicados y pendientes (Total: {{.Total}})</p>
+        </div>
+      </div>
+
+      {{if .SuccessMsg}}
+        <div class="alert alert-success">{{.SuccessMsg}}</div>
+      {{end}}
+
+      {{if .Vehicles}}
+        <div class="vehicles-list">
+          {{range .Vehicles}}
+            <div class="vehicle-item">
+              <img src="{{.ImageURL}}" alt="{{.Title}}" class="item-image" loading="lazy">
+              <div class="item-body">
+                <div>
+                  <h3 class="item-title">{{.Title}}</h3>
+                  <div class="item-meta">{{.YearMileage}} &bull; {{.Location}}</div>
+                </div>
+                <div class="item-footer">
+                  <div class="item-price">{{.PriceFormatted}}</div>
+                  <div>
+                    {{if eq .Status "Pending"}}
+                      <span class="badge-pending">● Pendiente de Aprobación</span>
+                    {{else if eq .Status "Published"}}
+                      <span class="badge-published">● Publicado</span>
+                    {{else}}
+                      <span class="badge-sold">● Vendido</span>
+                    {{end}}
+                  </div>
+                </div>
+              </div>
+            </div>
+          {{end}}
+        </div>
+      {{else}}
+        <div class="empty-state">
+          <p>No tienes vehículos registrados todavía. Utiliza el formulario a la izquierda para publicar tu primer vehículo.</p>
+        </div>
+      {{end}}
+    </div>
+  </main>
+
+</body>
+</html>

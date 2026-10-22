@@ -9,25 +9,16 @@ import (
 func TestHashAndCheckPassword(t *testing.T) {
 	password := "SecretPass123!"
 
-	salt, err := security.GenerateSalt()
-	if err != nil {
-		t.Fatalf("Error generando sal: %v", err)
-	}
-
-	if len(salt) != 32 {
-		t.Errorf("Se esperaba sal de 32 caracteres hex, obtenido: %d", len(salt))
-	}
-
-	hash := security.HashPassword(password, salt)
+	hash := security.HashPassword(password)
 	if hash == "" {
 		t.Fatal("El hash generado no debe estar vacío")
 	}
 
-	if !security.CheckPassword(password, salt, hash) {
+	if !security.CheckPassword(password, hash) {
 		t.Error("La verificación de la contraseña correcta falló")
 	}
 
-	if security.CheckPassword("WrongPassword", salt, hash) {
+	if security.CheckPassword("WrongPassword", hash) {
 		t.Error("La verificación aceptó una contraseña incorrecta")
 	}
 }
