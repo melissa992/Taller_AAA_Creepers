@@ -1,0 +1,119 @@
+{{define "dashboard/audit.html"}}
+{{template "header" .}}
+{{template "navbar" .}}
+
+<main class="main-content">
+  {{template "flash" .}}
+
+  <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem;">
+        <span class="badge badge-admin">RF-01 AAA</span>
+        <h1 style="font-size: 2.2rem; margin: 0;">Auditoría de Acciones (Accounting)</h1>
+      </div>
+      <p style="color: var(--text-secondary);">
+        Trazabilidad inmutable de peticiones interceptadas: Método, URL, UserID, Rol, Estado y Marca de tiempo.
+      </p>
+    </div>
+    <div style="display: flex; gap: 0.5rem;">
+      <a href="/dashboard" class="btn btn-secondary btn-sm">&larr; Volver al Dashboard</a>
+      <a href="/dashboard/audit" class="btn btn-primary btn-sm">Actualizar Registros</a>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+      <h3 style="font-size: 1.1rem;">Registros Recientes del Middleware de Accounting</h3>
+      <span style="font-size: 0.85rem; color: var(--text-muted);">
+        Mostrando {{.TotalLogs}} eventos registrados en memoria
+      </span>
+    </div>
+
+    {{if .Logs}}
+      <div class="table-responsive">
+        <table class="table-custom">
+          <thead>
+            <tr>
+              <th>Timestamp (UTC)</th>
+              <th>Método</th>
+              <th>Ruta (URL)</th>
+              <th>Usuario (ID / Username)</th>
+              <th>Rol</th>
+              <th>Estado</th>
+              <th>Latencia</th>
+              <th>IP Cliente</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{range .Logs}}
+              <tr>
+                <td style="font-family: monospace; font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap;">
+                  {{.Timestamp.Format "2006-01-02 15:04:05"}}
+                </td>
+                <td>
+                  {{if eq .Method "GET"}}
+                    <span class="badge-method method-get">GET</span>
+                  {{else if eq .Method "POST"}}
+                    <span class="badge-method method-post">POST</span>
+                  {{else if eq .Method "PUT"}}
+                    <span class="badge-method method-put">PUT</span>
+                  {{else if eq .Method "DELETE"}}
+                    <span class="badge-method method-delete">DEL</span>
+                  {{else}}
+                    <span class="badge-method">{{.Method}}</span>
+                  {{end}}
+                </td>
+                <td style="font-family: monospace; font-size: 0.85rem; font-weight: 500;">
+                  {{.URL}}
+                </td>
+                <td>
+                  {{if eq .UserID "ANONYMOUS"}}
+                    <span style="color: var(--text-muted); font-style: italic;">Anónimo</span>
+                  {{else}}
+                    <strong style="color: #ffffff;">{{.Username}}</strong>
+                    <span style="display: block; font-size: 0.75rem; color: var(--text-muted); font-family: monospace;">{{.UserID}}</span>
+                  {{end}}
+                </td>
+                <td>
+                  {{if eq .Role "ADMIN"}}
+                    <span class="badge badge-admin">Admin</span>
+                  {{else if eq .Role "SELLER"}}
+                    <span class="badge badge-seller">Vendedor</span>
+                  {{else if eq .Role "BUYER"}}
+                    <span class="badge badge-buyer">Comprador</span>
+                  {{else}}
+                    <span style="color: var(--text-muted); font-size: 0.8rem;">-</span>
+                  {{end}}
+                </td>
+                <td>
+                  {{if lt .Status 300}}
+                    <span style="color: #34d399; font-weight: 700; font-family: monospace;">{{.Status}}</span>
+                  {{else if lt .Status 400}}
+                    <span style="color: #60a5fa; font-weight: 700; font-family: monospace;">{{.Status}}</span>
+                  {{else if lt .Status 500}}
+                    <span style="color: #fbbf24; font-weight: 700; font-family: monospace;">{{.Status}}</span>
+                  {{else}}
+                    <span style="color: #fb7185; font-weight: 700; font-family: monospace;">{{.Status}}</span>
+                  {{end}}
+                </td>
+                <td style="font-family: monospace; font-size: 0.8rem; color: var(--text-secondary);">
+                  {{.Latency}}
+                </td>
+                <td style="font-family: monospace; font-size: 0.8rem; color: var(--text-muted);">
+                  {{.ClientIP}}
+                </td>
+              </tr>
+            {{end}}
+          </tbody>
+        </table>
+      </div>
+    {{else}}
+      <p style="color: var(--text-muted); font-size: 0.9rem; padding: 2rem; text-align: center;">
+        No hay registros de auditoría disponibles aún.
+      </p>
+    {{end}}
+  </div>
+</main>
+
+{{template "footer" .}}
+{{end}}

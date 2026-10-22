@@ -1,0 +1,169 @@
+{{define "dashboard/index.html"}}
+{{template "header" .}}
+{{template "navbar" .}}
+
+<main class="main-content">
+  {{template "flash" .}}
+
+  <div style="margin-bottom: 2rem;">
+    <h1 style="font-size: 2.2rem; margin-bottom: 0.3rem;">Panel de Control</h1>
+    <p style="color: var(--text-secondary);">
+      Bienvenido, <strong style="color: #ffffff;">{{.Username}}</strong> &bull; Sesión con privilegios de
+      {{if .IsAdmin}}
+        <span class="badge badge-admin">Administrador</span>
+      {{else if .IsSeller}}
+        <span class="badge badge-seller">Vendedor</span>
+      {{else}}
+        <span class="badge badge-buyer">Comprador</span>
+      {{end}}
+    </p>
+  </div>
+
+  <!-- Métricas Rápidas -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+    <div class="card" style="border-left: 4px solid var(--brand-cyan);">
+      <span style="font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 600;">
+        Vehículos en Catálogo
+      </span>
+      <div style="font-size: 2.2rem; font-weight: 800; color: #ffffff; font-family: 'Outfit'; margin-top: 0.3rem;">
+        {{.TotalVehicles}}
+      </div>
+      <a href="/vehicles" style="font-size: 0.85rem; color: var(--brand-cyan); margin-top: 0.5rem; display: inline-block;">
+        Ver catálogo &rarr;
+      </a>
+    </div>
+
+    {{if or .IsSeller .IsAdmin}}
+      <div class="card" style="border-left: 4px solid var(--brand-blue);">
+        <span style="font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 600;">
+          Mis Publicaciones
+        </span>
+        <div style="font-size: 2.2rem; font-weight: 800; color: #ffffff; font-family: 'Outfit'; margin-top: 0.3rem;">
+          {{.MyVehiclesCount}}
+        </div>
+        <a href="/vehicles/new" style="font-size: 0.85rem; color: #60a5fa; margin-top: 0.5rem; display: inline-block;">
+          + Publicar nuevo &rarr;
+        </a>
+      </div>
+    {{end}}
+
+    {{if .IsAdmin}}
+      <div class="card" style="border-left: 4px solid var(--brand-purple);">
+        <span style="font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 600;">
+          Usuarios Registrados
+        </span>
+        <div style="font-size: 2.2rem; font-weight: 800; color: #ffffff; font-family: 'Outfit'; margin-top: 0.3rem;">
+          {{.TotalUsers}}
+        </div>
+        <span style="font-size: 0.85rem; color: #c084fc; margin-top: 0.5rem; display: inline-block;">
+          Seguridad en memoria (sync.RWMutex)
+        </span>
+      </div>
+
+      <div class="card" style="border-left: 4px solid var(--brand-emerald);">
+        <span style="font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 600;">
+          Auditoría AAA (Accounting)
+        </span>
+        <div style="font-size: 2.2rem; font-weight: 800; color: #ffffff; font-family: 'Outfit'; margin-top: 0.3rem;">
+          Activo
+        </div>
+        <a href="/dashboard/audit" style="font-size: 0.85rem; color: #34d399; margin-top: 0.5rem; display: inline-block;">
+          Ver traza de eventos &rarr;
+        </a>
+      </div>
+    {{end}}
+  </div>
+
+  {{if or .IsSeller .IsAdmin}}
+    <!-- Tabla de vehículos del usuario -->
+    <div class="card" style="margin-bottom: 2rem;">
+      <h3 style="font-size: 1.25rem; margin-bottom: 1rem;">Mis Publicaciones Activas</h3>
+      {{if .MyVehicles}}
+        <div class="table-responsive">
+          <table class="table-custom">
+            <thead>
+              <tr>
+                <th>Vehículo</th>
+                <th>Año</th>
+                <th>Precio</th>
+                <th>Estado</th>
+                <th style="text-align: right;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{range .MyVehicles}}
+                <tr>
+                  <td>
+                    <strong>{{.Brand}} {{.Model}}</strong>
+                  </td>
+                  <td>{{.Year}}</td>
+                  <td style="color: var(--brand-cyan); font-weight: 600;">${{printf "%.2f" .Price}}</td>
+                  <td>
+                    {{if eq .Status "AVAILABLE"}}
+                      <span class="badge badge-available">Disponible</span>
+                    {{else if eq .Status "RESERVED"}}
+                      <span class="badge badge-reserved">Reservado</span>
+                    {{else}}
+                      <span class="badge badge-sold">Vendido</span>
+                    {{end}}
+                  </td>
+                  <td style="text-align: right;">
+                    <a href="/vehicles/{{.ID}}" class="btn btn-secondary btn-sm" style="margin-right: 0.3rem;">Ver</a>
+                    <a href="/vehicles/{{.ID}}/edit" class="btn btn-secondary btn-sm" style="margin-right: 0.3rem;">Editar</a>
+                  </td>
+                </tr>
+              {{end}}
+            </tbody>
+          </table>
+        </div>
+      {{else}}
+        <p style="color: var(--text-muted); font-size: 0.9rem; padding: 1rem 0;">
+          Aún no has publicado ningún vehículo en la plataforma.
+        </p>
+        <a href="/vehicles/new" class="btn btn-primary btn-sm">+ Publicar mi primer vehículo</a>
+      {{end}}
+    </div>
+  {{end}}
+
+  {{if .IsAdmin}}
+    <!-- Resumen de Usuarios del Sistema (Sólo Admin) -->
+    <div class="card">
+      <h3 style="font-size: 1.25rem; margin-bottom: 1rem;">Directorio de Cuentas del Sistema</h3>
+      <div class="table-responsive">
+        <table class="table-custom">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Usuario</th>
+              <th>Correo Electrónico</th>
+              <th>Rol Asignado</th>
+              <th>Registrado El</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{range .UsersList}}
+              <tr>
+                <td style="font-family: monospace; color: var(--text-muted); font-size: 0.8rem;">{{.ID}}</td>
+                <td><strong>{{.Username}}</strong></td>
+                <td>{{.Email}}</td>
+                <td>
+                  {{if eq .Role "ADMIN"}}
+                    <span class="badge badge-admin">Admin</span>
+                  {{else if eq .Role "SELLER"}}
+                    <span class="badge badge-seller">Vendedor</span>
+                  {{else}}
+                    <span class="badge badge-buyer">Comprador</span>
+                  {{end}}
+                </td>
+                <td style="color: var(--text-secondary); font-size: 0.85rem;">{{.CreatedAt.Format "2006-01-02 15:04"}}</td>
+              </tr>
+            {{end}}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {{end}}
+</main>
+
+{{template "footer" .}}
+{{end}}

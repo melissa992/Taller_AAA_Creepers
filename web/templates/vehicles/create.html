@@ -1,0 +1,87 @@
+{{define "vehicles/create.html"}}
+{{template "header" .}}
+{{template "navbar" .}}
+
+<main class="main-content">
+  <div style="max-width: 720px; margin: 0 auto;">
+    <div style="margin-bottom: 1.5rem;">
+      <a href="/vehicles" style="display: inline-flex; align-items: center; gap: 0.4rem; color: var(--text-secondary); font-size: 0.9rem;">
+        &larr; Volver al catálogo
+      </a>
+    </div>
+
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <div>
+          <h1 style="font-size: 1.8rem; margin-bottom: 0.3rem;">Publicar Nuevo Vehículo</h1>
+          <p style="color: var(--text-secondary); font-size: 0.9rem;">Complete los detalles técnicos y comerciales del vehículo</p>
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="quickFillVehicle()">
+          Llenar datos demo
+        </button>
+      </div>
+
+      {{template "flash" .}}
+
+      <form action="/vehicles" method="POST">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label class="form-label" for="brand">Marca *</label>
+            <input type="text" id="brand" name="brand" class="form-control" placeholder="Ej. Porsche, Toyota, Audi" required autofocus>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="model">Modelo *</label>
+            <input type="text" id="model" name="model" class="form-control" placeholder="Ej. 911 Carrera, Corolla, A4" required>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label class="form-label" for="year">Año *</label>
+            <input type="number" id="year" name="year" class="form-control" min="1900" max="2027" placeholder="2024" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="price">Precio (USD) *</label>
+            <input type="number" step="0.01" id="price" name="price" class="form-control" placeholder="45000.00" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="mileage">Kilometraje (km)</label>
+            <input type="number" id="mileage" name="mileage" class="form-control" placeholder="15000">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="image_url">URL de Imagen (Opcional)</label>
+          <input type="url" id="image_url" name="image_url" class="form-control" placeholder="https://ejemplo.com/auto.jpg (vacío usará imagen automática)">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="description">Descripción Detallada</label>
+          <textarea id="description" name="description" rows="4" class="form-control" placeholder="Detalles de mantenimiento, estado de llantas, interiores, extras..."></textarea>
+        </div>
+
+        <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1rem;">
+          <a href="/vehicles" class="btn btn-secondary">Cancelar</a>
+          <button type="submit" class="btn btn-primary">Publicar Vehículo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>
+
+<script>
+function quickFillVehicle() {
+  document.getElementById('brand').value = "Porsche";
+  document.getElementById('model').value = "Taycan 4S Turbo";
+  document.getElementById('year').value = "2024";
+  document.getElementById('price').value = "118500";
+  document.getElementById('mileage').value = "8200";
+  document.getElementById('description').value = "Vehículo 100% eléctrico en estado impecable. Paquete Sport Chrono, batería Performance Plus, interior en cuero bitono negro/tiza.";
+}
+</script>
+
+{{template "footer" .}}
+{{end}}

@@ -1,0 +1,15 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+automarket
+
+# Test and coverage artifacts
+*.test
+*.out
+
+# OS files
+.DS_Store
+Thumbs.db
