@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	log.Println("[INIT] Inicializando AutoMarket - HU-VIS-01 & HU-VEN-01...")
+	log.Println("[INIT] Inicializando AutoMarket")
 
 	// 1. Repositorio en memoria (Singleton, thread-safe con sync.RWMutex)
 	repo := repository.GetInstance()
@@ -28,7 +28,7 @@ func main() {
 	router.LoadHTMLGlob("templates/*")
 
 	// 4. Middlewares Globales
-	// Accounting: Intercepta y registra todas las peticiones (Método, URL, UserID, Timestamp)
+	// Accounting: Intercepta y registra todas las peticiones con trazabilidad e integridad SHA-256
 	router.Use(middleware.Accounting(repo))
 	// Authentication: Valida cookie "session_token" e inyecta user_id y rol en gin.Context
 	router.Use(middleware.Authenticate(repo))
@@ -37,6 +37,7 @@ func main() {
 	catalogHandler := handlers.NewCatalogHandler(repo)
 	authHandler := handlers.NewAuthHandler(repo, repo)
 	vehicleHandler := handlers.NewVehicleHandler(repo)
+	adminHandler := handlers.NewAdminHandler(repo, repo, repo)
 
 	// 6. Rutas Públicas (HU-VIS-01 y Autenticación)
 	router.GET("/", catalogHandler.Index)
@@ -57,7 +58,20 @@ func main() {
 		sellerGroup.POST("/vehicles", vehicleHandler.Create)
 	}
 
-	// 8. Iniciar el servidor
+	// 8. Rutas Protegidas por Autenticación y Autorización (HU-ADM-01 - Solo 'Admin')
+	adminGroup := router.Group("/admin")
+	adminGroup.Use(middleware.RequireAuth())
+	adminGroup.Use(middleware.RequireRoles(domain.RoleAdmin))
+	{
+		adminGroup.GET("/publicaciones", adminHandler.ShowPublications)
+		adminGroup.POST("/publicaciones/:id/aprobar", adminHandler.ApprovePublication)
+		adminGroup.POST("/publicaciones/:id/eliminar", adminHandler.DeletePublication)
+
+		adminGroup.GET("/usuarios", adminHandler.ShowUsers)
+		adminGroup.POST("/usuarios/:id/eliminar", adminHandler.DeleteUser)
+	}
+
+	// 9. Iniciar el servidor
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"

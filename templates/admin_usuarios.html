@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{.Title}}</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg-main: #0f172a;
+      --bg-surface: #1e293b;
+      --bg-card: #182234;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border-color: rgba(255, 255, 255, 0.08);
+      --accent-blue: #38bdf8;
+      --accent-green: #22c55e;
+      --accent-yellow: #f59e0b;
+      --accent-red: #f43f5e;
+      --radius: 12px;
+      --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+      --transition: all 0.2s ease;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      background: rgba(30, 41, 59, 0.85);
+      border-bottom: 1px solid var(--border-color);
+      padding: 1rem 1.5rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .brand {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--text-main);
+      text-decoration: none;
+    }
+
+    .brand span { color: var(--accent-blue); }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+    }
+
+    .nav-link {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 0.35rem 0.7rem;
+      border-radius: 6px;
+      transition: var(--transition);
+    }
+
+    .nav-link:hover, .nav-link.active {
+      color: var(--text-main);
+      background: rgba(56, 189, 248, 0.12);
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .role-tag {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      padding: 0.2rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .btn-logout {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border-color);
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .btn-logout:hover {
+      background: rgba(244, 63, 94, 0.15);
+      color: #fda4af;
+      border-color: rgba(244, 63, 94, 0.3);
+    }
+
+    .main-container {
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 1.75rem;
+      box-shadow: var(--shadow);
+    }
+
+    .card-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .card-subtitle {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .alert {
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+    }
+
+    .alert-error {
+      background: rgba(244, 63, 94, 0.15);
+      color: #fda4af;
+      border: 1px solid rgba(244, 63, 94, 0.3);
+    }
+
+    .alert-success {
+      background: rgba(34, 197, 94, 0.15);
+      color: #86efac;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .users-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    .users-table th {
+      padding: 0.85rem 1rem;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .users-table td {
+      padding: 1rem;
+      font-size: 0.92rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .badge-admin {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      padding: 0.2rem 0.55rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .badge-seller {
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent-blue);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 0.2rem 0.55rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .btn-delete {
+      background: rgba(244, 63, 94, 0.15);
+      color: #fda4af;
+      border: 1px solid rgba(244, 63, 94, 0.35);
+      padding: 0.45rem 0.85rem;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .btn-delete:hover {
+      background: #e11d48;
+      color: #ffffff;
+    }
+
+    .current-session-label {
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div class="nav-container">
+      <div class="nav-links">
+        <a href="/" class="brand">Auto<span>Market</span></a>
+        <a href="/admin/publicaciones" class="nav-link">Publicaciones</a>
+        <a href="/admin/usuarios" class="nav-link active">Usuarios</a>
+        <a href="/" class="nav-link">Catálogo Público</a>
+      </div>
+      <div class="user-info">
+        <span style="font-size: 0.9rem; font-weight: 500;">Hola, {{.Username}}</span>
+        <span class="role-tag">Administrador</span>
+        <form action="/logout" method="POST" style="margin: 0;">
+          <button type="submit" class="btn-logout">Cerrar Sesión</button>
+        </form>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-container">
+    {{if .SuccessMsg}}
+      <div class="alert alert-success">{{.SuccessMsg}}</div>
+    {{end}}
+
+    {{if .ErrorMsg}}
+      <div class="alert alert-error">{{.ErrorMsg}}</div>
+    {{end}}
+
+    <section class="card">
+      <h2 class="card-title">Listado de Usuarios Registrados</h2>
+      <p class="card-subtitle">Al eliminar un usuario se eliminan en cascada sus publicaciones asociadas y se invalidan sus sesiones activas (Total: {{.Total}})</p>
+
+      <table class="users-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Usuario</th>
+            <th>Rol</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{range .Users}}
+            <tr>
+              <td><code>{{.ID}}</code></td>
+              <td><strong>{{.Username}}</strong></td>
+              <td>
+                {{if eq .Role "Admin"}}
+                  <span class="badge-admin">Admin</span>
+                {{else}}
+                  <span class="badge-seller">{{.Role}}</span>
+                {{end}}
+              </td>
+              <td>
+                {{if ne .ID $.CurrentUserID}}
+                  <form action="/admin/usuarios/{{.ID}}/eliminar" method="POST" style="margin: 0;">
+                    <button type="submit" class="btn-delete">Eliminar Usuario</button>
+                  </form>
+                {{else}}
+                  <span class="current-session-label">Sesión actual (Protegido)</span>
+                {{end}}
+              </td>
+            </tr>
+          {{end}}
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+</body>
+</html>

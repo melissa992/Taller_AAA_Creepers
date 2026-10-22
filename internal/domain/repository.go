@@ -8,6 +8,7 @@ type UserRepository interface {
 	GetUserByID(ctx context.Context, id string) (*User, error)
 	GetUserByUsername(ctx context.Context, username string) (*User, error)
 	ListAllUsers(ctx context.Context) ([]*User, error)
+	DeleteUser(ctx context.Context, id string) error
 }
 
 // SessionRepository define los métodos para la gestión de sesiones en memoria.
@@ -33,4 +34,5 @@ type VehicleRepository interface {
 type AuditRepository interface {
 	Record(ctx context.Context, entry *AuditLog) error
 	ListRecent(ctx context.Context, limit int) ([]*AuditLog, error)
+	VerifyIntegrity(ctx context.Context) (bool, int, error)
 }

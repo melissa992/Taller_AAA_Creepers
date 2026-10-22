@@ -48,6 +48,7 @@ func RequireAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		isAuth, exists := c.Get("is_authenticated")
 		if !exists || !isAuth.(bool) {
+			SetAuditMetadata(c, "ACCESO_DENEGADO", c.Request.URL.Path, "DENEGADO_NO_AUTENTICADO")
 			c.Redirect(http.StatusSeeOther, "/login?error=Debe+iniciar+sesión+para+continuar")
 			c.Abort()
 			return
@@ -61,6 +62,7 @@ func RequireRoles(allowedRoles ...domain.Role) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		isAuth, exists := c.Get("is_authenticated")
 		if !exists || !isAuth.(bool) {
+			SetAuditMetadata(c, "ACCESO_DENEGADO", c.Request.URL.Path, "DENEGADO_NO_AUTENTICADO")
 			c.Redirect(http.StatusSeeOther, "/login?error=Debe+iniciar+sesión")
 			c.Abort()
 			return
@@ -78,6 +80,7 @@ func RequireRoles(allowedRoles ...domain.Role) gin.HandlerFunc {
 		}
 
 		if !isAllowed {
+			SetAuditMetadata(c, "ACCESO_DENEGADO", c.Request.URL.Path, "DENEGADO_ROL_INSUFICIENTE")
 			c.String(http.StatusForbidden, "403 Acceso Denegado: Se requiere rol autorizado (%s)", formatRoles(allowedRoles))
 			c.Abort()
 			return

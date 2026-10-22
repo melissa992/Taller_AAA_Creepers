@@ -30,6 +30,10 @@ func NewAuthHandler(userRepo domain.UserRepository, sessionRepo domain.SessionRe
 // ShowRegister muestra el formulario de registro.
 func (h *AuthHandler) ShowRegister(c *gin.Context) {
 	if isAuth, _ := c.Get("is_authenticated"); isAuth == true {
+		if c.GetString("role") == string(domain.RoleAdmin) {
+			c.Redirect(http.StatusSeeOther, "/admin/publicaciones")
+			return
+		}
 		c.Redirect(http.StatusSeeOther, "/dashboard")
 		return
 	}
@@ -112,6 +116,10 @@ func (h *AuthHandler) Register(c *gin.Context) {
 // ShowLogin muestra el formulario de inicio de sesión.
 func (h *AuthHandler) ShowLogin(c *gin.Context) {
 	if isAuth, _ := c.Get("is_authenticated"); isAuth == true {
+		if c.GetString("role") == string(domain.RoleAdmin) {
+			c.Redirect(http.StatusSeeOther, "/admin/publicaciones")
+			return
+		}
 		c.Redirect(http.StatusSeeOther, "/dashboard")
 		return
 	}
@@ -175,6 +183,11 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 	// Establecer cookie HttpOnly
 	middleware.SetSessionCookie(c, token)
+
+	if user.Role == domain.RoleAdmin {
+		c.Redirect(http.StatusSeeOther, "/admin/publicaciones")
+		return
+	}
 
 	c.Redirect(http.StatusSeeOther, "/dashboard")
 }
