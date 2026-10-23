@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"automarket/internal/domain"
+	"automarket/internal/middleware"
 	"automarket/internal/security"
 
 	"github.com/gin-gonic/gin"
@@ -30,10 +31,12 @@ func (h *VehicleHandler) Dashboard(c *gin.Context) {
 
 	myVehicles, err := h.repo.GetBySellerID(c.Request.Context(), sellerID)
 	if err != nil {
+		middleware.SetAuditMetadata(c, "VER_DASHBOARD_VENDEDOR", "/dashboard", "ERROR")
 		c.String(http.StatusInternalServerError, "Error consultando vehículos del vendedor")
 		return
 	}
 
+	middleware.SetAuditMetadata(c, "VER_DASHBOARD_VENDEDOR", "/dashboard", "EXITO")
 	c.HTML(http.StatusOK, "dashboard_seller.html", gin.H{
 		"Title":      "AutoMarket - Panel del Vendedor",
 		"Username":   username,
@@ -60,6 +63,7 @@ func (h *VehicleHandler) Create(c *gin.Context) {
 
 	// Validación de campos
 	if title == "" || priceFormatted == "" || yearMileage == "" || location == "" || whatsAppNumber == "" {
+		middleware.SetAuditMetadata(c, "CREAR_VEHICULO", "/vehicles", "FALLO_VALIDACION")
 		myVehicles, _ := h.repo.GetBySellerID(c.Request.Context(), sellerID)
 		c.HTML(http.StatusBadRequest, "dashboard_seller.html", gin.H{
 			"Title":          "AutoMarket - Panel del Vendedor",
@@ -95,6 +99,7 @@ func (h *VehicleHandler) Create(c *gin.Context) {
 	}
 
 	if err := h.repo.Create(c.Request.Context(), newVehicle); err != nil {
+		middleware.SetAuditMetadata(c, "CREAR_VEHICULO", newVehicle.ID, "ERROR")
 		myVehicles, _ := h.repo.GetBySellerID(c.Request.Context(), sellerID)
 		c.HTML(http.StatusInternalServerError, "dashboard_seller.html", gin.H{
 			"Title":        "AutoMarket - Panel del Vendedor",
@@ -106,6 +111,7 @@ func (h *VehicleHandler) Create(c *gin.Context) {
 		return
 	}
 
+	middleware.SetAuditMetadata(c, "CREAR_VEHICULO", newVehicle.ID, "EXITO")
 	c.Redirect(http.StatusSeeOther, "/dashboard?success=Vehículo+creado+exitosamente.+Se+encuentra+en+estado+Pending+para+revisión.")
 }
 

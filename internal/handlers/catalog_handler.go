@@ -28,9 +28,17 @@ func (h *CatalogHandler) Index(c *gin.Context) {
 		return
 	}
 
+	isAuth := c.GetBool("is_authenticated")
+	role := c.GetString("role")
+	username := c.GetString("username")
+
 	c.HTML(http.StatusOK, "index.html", gin.H{
-		"Title":    "AutoMarket - Catálogo Oficial de Vehículos",
-		"Vehicles": vehicles,
-		"Total":    len(vehicles),
+		"Title":           "AutoMarket - Catálogo Oficial de Vehículos",
+		"Vehicles":        vehicles,
+		"Total":           len(vehicles),
+		"IsAuthenticated": isAuth,
+		"IsAdmin":         isAuth && role == string(domain.RoleAdmin),
+		"IsSeller":        isAuth && role == string(domain.RoleSeller),
+		"Username":        username,
 	})
 }
