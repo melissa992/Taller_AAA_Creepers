@@ -50,6 +50,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 
 	// Validación robusta de inputs
 	if username == "" || password == "" {
+		middleware.SetAuditMetadata(c, "REGISTRAR_USUARIO", "/register", "FALLO_VALIDACION")
 		c.HTML(http.StatusBadRequest, "register.html", gin.H{
 			"Title":        "AutoMarket - Registro de Vendedor",
 			"ErrorMessage": "Todos los campos son obligatorios.",
@@ -59,6 +60,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	}
 
 	if len(username) < 3 {
+		middleware.SetAuditMetadata(c, "REGISTRAR_USUARIO", username, "FALLO_VALIDACION")
 		c.HTML(http.StatusBadRequest, "register.html", gin.H{
 			"Title":        "AutoMarket - Registro de Vendedor",
 			"ErrorMessage": "El nombre de usuario debe tener al menos 3 caracteres.",
@@ -68,6 +70,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	}
 
 	if len(password) < 6 {
+		middleware.SetAuditMetadata(c, "REGISTRAR_USUARIO", username, "FALLO_VALIDACION")
 		c.HTML(http.StatusBadRequest, "register.html", gin.H{
 			"Title":        "AutoMarket - Registro de Vendedor",
 			"ErrorMessage": "La contraseña debe tener al menos 6 caracteres.",
@@ -77,6 +80,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	}
 
 	if password != confirmPassword {
+		middleware.SetAuditMetadata(c, "REGISTRAR_USUARIO", username, "FALLO_VALIDACION")
 		c.HTML(http.StatusBadRequest, "register.html", gin.H{
 			"Title":        "AutoMarket - Registro de Vendedor",
 			"ErrorMessage": "Las contraseñas no coinciden.",
@@ -101,6 +105,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		if errors.Is(err, domain.ErrUserAlreadyExists) {
 			errMsg = "El nombre de usuario ya está registrado."
 		}
+		middleware.SetAuditMetadata(c, "REGISTRAR_USUARIO", username, "FALLO_USUARIO_EXISTENTE")
 		c.HTML(http.StatusBadRequest, "register.html", gin.H{
 			"Title":        "AutoMarket - Registro de Vendedor",
 			"ErrorMessage": errMsg,
@@ -108,6 +113,11 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		})
 		return
 	}
+
+	c.Set("user_id", newUser.ID)
+	c.Set("username", newUser.Username)
+	c.Set("role", string(newUser.Role))
+	middleware.SetAuditMetadata(c, "REGISTRAR_USUARIO", newUser.ID, "EXITO")
 
 	// Redirigir al login con mensaje exitoso
 	c.Redirect(http.StatusSeeOther, "/login?success=Cuenta+creada+exitosamente.+Por+favor+inicie+sesión.")
@@ -136,6 +146,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	password := c.PostForm("password")
 
 	if username == "" || password == "" {
+		middleware.SetAuditMetadata(c, "INICIAR_SESION", "/login", "FALLO_VALIDACION")
 		c.HTML(http.StatusBadRequest, "login.html", gin.H{
 			"Title":        "AutoMarket - Iniciar Sesión",
 			"ErrorMessage": "Por favor ingrese usuario y contraseña.",
@@ -146,6 +157,8 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 	user, err := h.userRepo.GetUserByUsername(c.Request.Context(), username)
 	if err != nil || !security.CheckPassword(password, user.PasswordHash) {
+		c.Set("username", username)
+		middleware.SetAuditMetadata(c, "INICIAR_SESION", username, "DENEGADO_CREDENCIALES_INVALIDAS")
 		c.HTML(http.StatusUnauthorized, "login.html", gin.H{
 			"Title":        "AutoMarket - Iniciar Sesión",
 			"ErrorMessage": "Credenciales inválidas. Verifique su usuario y contraseña.",
@@ -157,6 +170,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	// Generar token y registrar sesión
 	token, err := security.GenerateSessionToken()
 	if err != nil {
+		middleware.SetAuditMetadata(c, "INICIAR_SESION", user.ID, "ERROR")
 		c.HTML(http.StatusInternalServerError, "login.html", gin.H{
 			"Title":        "AutoMarket - Iniciar Sesión",
 			"ErrorMessage": "Error generando token de sesión.",
@@ -174,6 +188,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	}
 
 	if err := h.sessionRepo.CreateSession(c.Request.Context(), session); err != nil {
+		middleware.SetAuditMetadata(c, "INICIAR_SESION", user.ID, "ERROR")
 		c.HTML(http.StatusInternalServerError, "login.html", gin.H{
 			"Title":        "AutoMarket - Iniciar Sesión",
 			"ErrorMessage": "Error almacenando la sesión.",
@@ -183,6 +198,11 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 	// Establecer cookie HttpOnly
 	middleware.SetSessionCookie(c, token)
+
+	c.Set("user_id", user.ID)
+	c.Set("username", user.Username)
+	c.Set("role", string(user.Role))
+	middleware.SetAuditMetadata(c, "INICIAR_SESION", user.ID, "EXITO")
 
 	if user.Role == domain.RoleAdmin {
 		c.Redirect(http.StatusSeeOther, "/admin/publicaciones")
@@ -199,5 +219,6 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 		_ = h.sessionRepo.DeleteSession(c.Request.Context(), token)
 	}
 	middleware.ClearSessionCookie(c)
+	middleware.SetAuditMetadata(c, "CERRAR_SESION", c.GetString("user_id"), "EXITO")
 	c.Redirect(http.StatusSeeOther, "/login?success=Sesión+cerrada+correctamente.")
 }
