@@ -4,8 +4,12 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -14,7 +18,11 @@ import (
 	"automarket/internal/security"
 )
 
-// MemoryRepository encapsula las colecciones en memoria con protección concurrente (sync.RWMutex).
+// DefaultAuditLogFile define la ruta por defecto del archivo JSON donde se persisten los logs de auditoría.
+const DefaultAuditLogFile = "audit_logs.json"
+
+// MemoryRepository encapsula las colecciones en memoria con protección concurrente (sync.RWMutex)
+// y persistencia en archivo JSON local para los registros de auditoría (Accounting).
 type MemoryRepository struct {
 	userMu     sync.RWMutex
 	users      map[string]*domain.User
@@ -26,9 +34,10 @@ type MemoryRepository struct {
 	sessionMu sync.RWMutex
 	sessions  map[string]*domain.Session
 
-	auditMu sync.RWMutex
-	logs    []*domain.AuditLog
-	maxLogs int
+	auditMu       sync.RWMutex
+	logs          []*domain.AuditLog
+	maxLogs       int
+	auditFilePath string
 }
 
 var (
@@ -36,18 +45,34 @@ var (
 	once     sync.Once
 )
 
+// resolveDefaultAuditFilePath devuelve la ruta a "audit_logs.json" en la raíz del proyecto.
+func resolveDefaultAuditFilePath() string {
+	if _, file, _, ok := runtime.Caller(0); ok {
+		projectRoot := filepath.Clean(filepath.Join(filepath.Dir(file), "..", ".."))
+		return filepath.Join(projectRoot, DefaultAuditLogFile)
+	}
+	return DefaultAuditLogFile
+}
+
 // GetInstance implementa el patrón Singleton garantizando una única fuente de verdad en memoria.
 func GetInstance() *MemoryRepository {
 	once.Do(func() {
+		auditPath := os.Getenv("AUDIT_LOG_FILE")
+		if auditPath == "" {
+			auditPath = resolveDefaultAuditFilePath()
+		}
+
 		instance = &MemoryRepository{
-			users:      make(map[string]*domain.User),
-			byUsername: make(map[string]string),
-			vehicles:   make(map[string]*domain.Vehicle),
-			sessions:   make(map[string]*domain.Session),
-			logs:       make([]*domain.AuditLog, 0, 1000),
-			maxLogs:    1000,
+			users:         make(map[string]*domain.User),
+			byUsername:    make(map[string]string),
+			vehicles:      make(map[string]*domain.Vehicle),
+			sessions:      make(map[string]*domain.Session),
+			logs:          make([]*domain.AuditLog, 0, 1000),
+			maxLogs:       1000,
+			auditFilePath: auditPath,
 		}
 		instance.seedData()
+		_ = instance.loadAuditLogsFromDisk()
 	})
 	return instance
 }
@@ -399,6 +424,51 @@ func computeAuditHash(e *domain.AuditLog) string {
 	return hex.EncodeToString(sum[:])
 }
 
+// loadAuditLogsFromDisk carga los registros previos desde el archivo JSON local si existe.
+func (r *MemoryRepository) loadAuditLogsFromDisk() error {
+	r.auditMu.Lock()
+	defer r.auditMu.Unlock()
+
+	if r.auditFilePath == "" {
+		return nil
+	}
+
+	data, err := os.ReadFile(r.auditFilePath)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil
+		}
+		return err
+	}
+
+	if len(strings.TrimSpace(string(data))) == 0 {
+		return nil
+	}
+
+	var loaded []*domain.AuditLog
+	if err := json.Unmarshal(data, &loaded); err != nil {
+		return err
+	}
+
+	r.logs = loaded
+	return nil
+}
+
+// saveAuditLogsLocked persiste el slice de logs en el archivo JSON local.
+// Requiere que r.auditMu ya esté adquirido por el llamador.
+func (r *MemoryRepository) saveAuditLogsLocked() error {
+	if r.auditFilePath == "" {
+		return nil
+	}
+
+	data, err := json.MarshalIndent(r.logs, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(r.auditFilePath, data, 0644)
+}
+
 func (r *MemoryRepository) Record(ctx context.Context, entry *domain.AuditLog) error {
 	if entry == nil {
 		return domain.ErrInvalidInput
@@ -422,6 +492,12 @@ func (r *MemoryRepository) Record(ctx context.Context, entry *domain.AuditLog) e
 	entry.Hash = computeAuditHash(entry)
 
 	r.logs = append(r.logs, entry.Clone())
+
+	// Persistir los logs en el archivo JSON local
+	if err := r.saveAuditLogsLocked(); err != nil {
+		return fmt.Errorf("error guardando logs de auditoría en JSON local: %w", err)
+	}
+
 	return nil
 }
 
@@ -463,4 +539,3 @@ func (r *MemoryRepository) ListRecent(ctx context.Context, limit int) ([]*domain
 	}
 	return result, nil
 }
-
